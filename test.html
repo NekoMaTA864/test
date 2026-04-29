@@ -3,89 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HelloWorld 合約測試</title>
-    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
+    <title>GBC Web3 合約互動 - Hello Raymond</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    
     <style>
+        /* ==========================================
+           GBC 專屬配色定義
+           桃香: #85C9DC (外框、日誌區塊)
+           仁菜: #D90E2C (主標題、連接按鈕)
+           昂:   #76BD53 (發送按鈕)
+           智:   #E34D8D (分隔線)
+           RUPA: #EEDA01 (當前訊息背景)
+        ========================================== */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
+            font-family: 'Avenir', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #fafcfd;
+            color: #333;
             display: flex;
             justify-content: center;
             padding: 40px 20px;
             margin: 0;
         }
+
         .container {
             background-color: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            border: 3px solid #85C9DC; /* 桃香藍 */
+            border-radius: 12px;
             padding: 30px;
             width: 100%;
-            max-width: 600px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            max-width: 550px;
+            box-shadow: 0 6px 15px rgba(133, 201, 220, 0.2); /* 桃香藍陰影 */
         }
+
         h1, h2 {
             text-align: center;
-            color: #333;
+            margin-top: 0;
         }
+
         h1 {
-            margin-bottom: 20px;
+            font-size: 26px;
+            color: #D90E2C; /* 仁菜紅 */
+            margin-bottom: 25px;
         }
+
         h2 {
-            margin-top: 30px;
-            margin-bottom: 15px;
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
         }
+
         hr {
             border: 0;
-            height: 1px;
-            background: #ddd;
-            margin: 20px 0;
+            height: 2px;
+            background: #E34D8D; /* 智粉紅 */
+            margin: 25px 0;
+            opacity: 0.6;
         }
-        p {
-            color: #666;
-            line-height: 1.5;
+
+        .message-display {
+            background-color: rgba(238, 218, 1, 0.15); /* RUPA 黃 (微透明背景) */
+            border: 2px solid #EEDA01; /* RUPA 黃外框 */
+            color: #333; 
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
         }
+
         button {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             font-size: 16px;
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            font-weight: bold;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s ease;
             margin-bottom: 10px;
         }
-        button:hover:not(:disabled) {
-            background-color: #e0e0e0;
+
+        #connectBtn {
+            background-color: #D90E2C; /* 仁菜紅 */
+            border: none;
+            color: white;
         }
+        #connectBtn:hover:not(:disabled) {
+            background-color: #a80a21;
+        }
+
+        #updateBtn {
+            background-color: #76BD53; /* 昂綠 */
+            border: none;
+            color: white;
+        }
+        #updateBtn:hover:not(:disabled) {
+            background-color: #5a913e;
+        }
+
         button:disabled {
-            background-color: #f9f9f9;
-            color: #aaa;
+            background-color: #d1d9e0 !important;
+            color: #fff !important;
             cursor: not-allowed;
+            box-shadow: none !important;
         }
+
         input[type="text"] {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            border: 2px solid #85C9DC; /* 桃香藍 */
+            border-radius: 6px;
             box-sizing: border-box;
             margin-bottom: 15px;
         }
-        .warning {
-            color: #d97706;
-            font-size: 14px;
-            margin-top: 5px;
+        input[type="text"]:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(133, 201, 220, 0.8);
         }
+
         .log-box {
-            background-color: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 4px;
+            background-color: rgba(133, 201, 220, 0.05); /* 桃香藍極淡背景 */
+            border: 1px solid #85C9DC; /* 桃香藍 */
+            border-radius: 8px;
             padding: 15px;
-            font-family: monospace;
-            font-size: 14px;
-            color: #333;
-            min-height: 80px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            min-height: 100px;
+            max-height: 200px;
+            overflow-y: auto;
             white-space: pre-wrap;
             word-wrap: break-word;
         }
@@ -93,168 +140,4 @@
 </head>
 <body>
 
-<div class="container">
-    <h1>HelloWorld 合約測試</h1>
-    <p>這是一個簡單的網頁，用於測試已部署在 Sepolia 網路上的 HelloWorld 合約。</p>
-    
-    <hr>
-
-    <h2>當前訊息</h2>
-    <button id="connectBtn">連接 MetaMask</button>
-    <p id="currentMsgText">尚未讀取訊息，請先連接錢包。</p>
-
-    <hr>
-
-    <h2>更新訊息</h2>
-    <input type="text" id="newMessageInput" placeholder="輸入新的訊息..." disabled>
-    <button id="updateBtn" disabled>更新訊息</button>
-    <p class="warning">⚠️ 此操作會發送一筆交易，需要支付 Gas 費用。</p>
-
-    <hr>
-
-    <h2>交易日誌</h2>
-    <div id="logBox" class="log-box">日誌會顯示在這裡。請點擊『連接 MetaMask』按鈕，開始測試。</div>
-</div>
-
-<script>
-    // ==========================================
-    // 1. 請在這裡填入你的智能合約地址與 ABI
-    // ==========================================
-    const contractAddress = "0xbe42b4EC1383536dBE207866D114e83431602087";
-    
-    // 這是標準的 HelloWorld ABI (包含讀取 message 和寫入 updateMessage 的功能)
-    // 如果你的智能合約變數名稱不同，請務必將此處的 ABI 替換成你從 Remix 複製過來的 ABI
-    const contractABI = [
-        {
-            "inputs": [],
-            "name": "message",
-            "outputs": [{"internalType": "string", "name": "", "type": "string"}],
-            "stateMutability": "view",
-            "type": "function"
-        },
-        {
-            "inputs": [{"internalType": "string", "name": "newMessage", "type": "string"}],
-            "name": "updateMessage",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        }
-    ];
-
-    // 全域變數
-    let provider;
-    let signer;
-    let contract;
-
-    // 取得 HTML 元素
-    const connectBtn = document.getElementById('connectBtn');
-    const currentMsgText = document.getElementById('currentMsgText');
-    const newMessageInput = document.getElementById('newMessageInput');
-    const updateBtn = document.getElementById('updateBtn');
-    const logBox = document.getElementById('logBox');
-
-    // 寫入日誌的輔助函數
-    function log(message) {
-        logBox.innerHTML += `\n${message}`;
-        logBox.scrollTop = logBox.scrollHeight; // 自動捲動到最下面
-    }
-
-    // 清空並寫入日誌
-    function setLog(message) {
-        logBox.innerHTML = message;
-    }
-
-    // ==========================================
-    // 2. 連接 MetaMask
-    // ==========================================
-    async function connectWallet() {
-        if (typeof window.ethereum !== 'undefined') {
-            try {
-                setLog("正在請求連接 MetaMask...");
-                // 請求使用者連接錢包
-                await window.ethereum.request({ method: 'eth_requestAccounts' });
-                
-                // 初始化 Ethers.js
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                signer = provider.getSigner();
-                const address = await signer.getAddress();
-                
-                // 初始化智能合約物件
-                contract = new ethers.Contract(contractAddress, contractABI, signer);
-
-                connectBtn.innerText = `已連接: ${address.substring(0, 6)}...${address.substring(38)}`;
-                connectBtn.disabled = true;
-                
-                // 解鎖輸入框與按鈕
-                newMessageInput.disabled = false;
-                updateBtn.disabled = false;
-
-                log("錢包連接成功！正在讀取合約訊息...");
-                
-                // 讀取當前訊息
-                await fetchCurrentMessage();
-
-            } catch (error) {
-                setLog(`錯誤: 無法連接錢包。\n詳情: ${error.message}`);
-            }
-        } else {
-            setLog("錯誤: 請安裝 MetaMask 或其他支援 EIP-1193 的錢包。");
-        }
-    }
-
-    // ==========================================
-    // 3. 讀取智能合約資料
-    // ==========================================
-    async function fetchCurrentMessage() {
-        try {
-            // 呼叫智能合約中的 'message' 變數 (或函數)
-            const msg = await contract.message();
-            currentMsgText.innerHTML = `<strong>合約當前訊息：</strong> ${msg}`;
-            log("讀取訊息成功！");
-        } catch (error) {
-            log(`讀取訊息失敗: ${error.message}`);
-        }
-    }
-
-    // ==========================================
-    // 4. 寫入資料到智能合約
-    // ==========================================
-    async function updateContractMessage() {
-        const newMsg = newMessageInput.value;
-        if (!newMsg) {
-            alert("請先輸入新的訊息！");
-            return;
-        }
-
-        try {
-            updateBtn.disabled = true;
-            updateBtn.innerText = "交易處理中...";
-            log(`準備發送交易，更新訊息為: "${newMsg}"...請在 MetaMask 中確認。`);
-
-            // 呼叫智能合約的 updateMessage 函數
-            const tx = await contract.updateMessage(newMsg);
-            log(`交易已發送！等待區塊確認中...\n交易哈希: ${tx.hash}`);
-
-            // 等待區塊鏈確認該筆交易
-            await tx.wait();
-            log("交易已確認！訊息更新成功。");
-
-            // 交易成功後，清空輸入框並重新讀取最新訊息
-            newMessageInput.value = "";
-            await fetchCurrentMessage();
-
-        } catch (error) {
-            log(`交易失敗: ${error.message}`);
-        } finally {
-            updateBtn.disabled = false;
-            updateBtn.innerText = "更新訊息";
-        }
-    }
-
-    // 綁定按鈕事件
-    connectBtn.addEventListener('click', connectWallet);
-    updateBtn.addEventListener('click', updateContractMessage);
-
-</script>
-</body>
-</html>
+<div class
