@@ -140,4 +140,141 @@
 </head>
 <body>
 
-<div class
+<div class="container">
+    <h1>Web3 互動：合約變數更新練習</h1>
+    
+    <button id="connectBtn">1. 連接 MetaMask</button>
+    <div id="currentMsgText" class="message-display">合約訊息將在此處顯示...</div>
+
+    <hr>
+
+    <h2>發送新訊息</h2>
+    <input type="text" id="newMessageInput" placeholder="輸入新的內容..." disabled>
+    <button id="updateBtn" disabled>2. 發送更新</button>
+
+    <hr>
+
+    <div id="logBox" class="log-box">交易日誌將顯示在此處。請點擊『連接 MetaMask』。</div>
+</div>
+
+<script>
+    // 你的合約地址
+    const contractAddress = "0xbe42b4EC1383536dBE207866D114e83431602087";
+
+    const contractABI = [
+        {
+            "inputs": [],
+            "name": "message",
+            "outputs": [{"internalType": "string", "name": "", "type": "string"}],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [{"internalType": "string", "name": "newMessage", "type": "string"}],
+            "name": "updateMessage",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        }
+    ];
+
+    let provider;
+    let signer;
+    let contract;
+
+    const connectBtn = document.getElementById('connectBtn');
+    const currentMsgText = document.getElementById('currentMsgText');
+    const newMessageInput = document.getElementById('newMessageInput');
+    const updateBtn = document.getElementById('updateBtn');
+    const logBox = document.getElementById('logBox');
+
+    function log(message) {
+        const timestamp = new Date().toLocaleTimeString();
+        logBox.innerHTML += `\n[${timestamp}] ${message}`;
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function setLog(message) {
+        logBox.innerHTML = message;
+    }
+
+    async function connectWallet() {
+        // 【修復檢查】確認 ethers 是否成功載入
+        if (typeof ethers === 'undefined') {
+            setLog("錯誤：找不到 ethers.js，請重新整理網頁或檢查網路連線。");
+            return;
+        }
+
+        if (typeof window.ethereum !== 'undefined') {
+            try {
+                setLog("正在請求錢包授權...");
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                const address = await signer.getAddress();
+                
+                contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+                connectBtn.innerText = `已連接: ${address.substring(0, 6)}...${address.substring(38)}`;
+                connectBtn.disabled = true;
+                
+                newMessageInput.disabled = false;
+                updateBtn.disabled = false;
+
+                log("連接成功。正在讀取合約訊息...");
+                await fetchCurrentMessage();
+
+            } catch (error) {
+                setLog(`連接錢包失敗詳情: ${error.message}`);
+            }
+        } else {
+            setLog("錯誤: 請先安裝 MetaMask 錢包擴充功能。");
+        }
+    }
+
+    async function fetchCurrentMessage() {
+        try {
+            const msg = await contract.message();
+            currentMsgText.innerHTML = `${msg}`;
+            log("訊息讀取成功。");
+        } catch (error) {
+            log(`讀取合約失敗: ${error.message} \n(可能原因：確保你的 MetaMask 已切換到 Sepolia 測試網)`);
+        }
+    }
+
+    async function updateContractMessage() {
+        const newMsg = newMessageInput.value;
+        if (!newMsg) {
+            alert("請先輸入訊息內容。");
+            return;
+        }
+
+        try {
+            updateBtn.disabled = true;
+            updateBtn.innerText = "發送中...";
+            log(`準備發送交易，更新訊息為: "${newMsg}"...請在 MetaMask 中確認。`);
+
+            const tx = await contract.updateMessage(newMsg);
+            log(`交易已發送。等待區塊鏈確認...\nHASH: ${tx.hash}`);
+
+            await tx.wait();
+            log("交易確認成功！合約訊息已更新。");
+
+            newMessageInput.value = "";
+            await fetchCurrentMessage();
+
+        } catch (error) {
+            log(`交易失敗詳情: ${error.message}`);
+        } finally {
+            updateBtn.disabled = false;
+            updateBtn.innerText = "2. 發送更新";
+        }
+    }
+
+    connectBtn.addEventListener('click', connectWallet);
+    updateBtn.addEventListener('click', updateContractMessage);
+
+</script>
+</body>
+</html>
